@@ -45,6 +45,7 @@ func dlCmdDownloadRun(cmd *cobra.Command, args []string) {
 	err := core.Download(dlCtx.dlPath, dlCtx.urls)
 	if err != nil {
 		fmt.Printf("Download operation failed. %v\n", err)
+	} else {
+		fmt.Printf("Download operation complete, all URLs processed. \n")
 	}
-	fmt.Printf("Download operation complete \n")
 }
