@@ -9,18 +9,20 @@ import (
 	"sync"
 	"time"
 
+	"github.com/dl_cli/pkg/constants"
 	"github.com/dl_cli/pkg/protocol"
 	"github.com/dl_cli/pkg/protocol/dl_http"
 	"github.com/dl_cli/pkg/utils"
 )
 
+// Download context for core package
 type DownloadContextCore struct {
-	dlPath string
-	urls   []string
+	dlPath string   //target path
+	urls   []string //slice of url strings
 }
 
+// Creates destination directories on local filesystem
 func createDstDir(path string) (string, error) {
-
 	// Check if path exists
 	info, err := os.Stat(path)
 	if err == nil {
@@ -42,8 +44,7 @@ func createDstDir(path string) (string, error) {
 
 	// Create a sub-dir based on current timestamp to avoid collisions
 	t := time.Now()
-	subDir := t.Format("2006-01-02-15-04-05")
-
+	subDir := t.Format(constants.DateFormat)
 	dstDir := filepath.Join(path, subDir)
 
 	err = os.MkdirAll(dstDir, 0700)
@@ -54,6 +55,7 @@ func createDstDir(path string) (string, error) {
 	return dstDir, nil
 }
 
+// Removes the directory from the path
 func removeDstDir(path string) error {
 	err := os.Remove(path)
 	if err != nil {
@@ -62,19 +64,23 @@ func removeDstDir(path string) error {
 	return nil
 }
 
+// Splits comma separated string into a slice of strings
 func parseURLs(path string) ([]string, error) {
 	urlsSlice := strings.Split(path, ",")
 	return urlsSlice, nil
 }
 
+// Core logic for download 
 func Download(path string, urls string) error {
 
+	// Creates base directory for destination path
 	dstDir, err := createDstDir(path)
 	if err != nil {
 		fmt.Printf("Target path validation failed. %v", err)
 		return err
 	}
 
+	// Splits comma separated string into a slice of strings
 	urlsSlice, err := parseURLs(urls)
 	if err != nil {
 		fmt.Printf("Parsing of input urls failed. %v", err)
@@ -84,6 +90,7 @@ func Download(path string, urls string) error {
 	numURLs := len(urlsSlice)
 	dlURLs := make([]utils.DownloadURL, numURLs)
 
+	// Populate slice of download URLs for each url
 	for i, urlStr := range urlsSlice {
 		var dlURL utils.DownloadURL
 		u, err := url.Parse(urlStr)
@@ -107,13 +114,13 @@ func Download(path string, urls string) error {
 	// Create a waitgroup to track the downloads
 	var wg sync.WaitGroup
 
-	// There will be a separate thread per url.
+	// There will be a separate thread per url
 	wg.Add(numURLs)
 
 	for i := 0; i < numURLs; i++ {
 		go func(i int) {
 			// Worker will be done after current thread is done
-			// with it's work.
+			// with it's work
 			defer wg.Done()
 			var protocol protocol.Protocol
 			// For adding support to future protocols, add the case here.
@@ -132,8 +139,10 @@ func Download(path string, urls string) error {
 		}(i)
 	}
 
-	// Block till all the downloads are done.
+	// Block till all the downloads are done
 	wg.Wait()
+
+	// Print the results on console
 	fmt.Printf("***************************\n")
 	for i := 0; i < numURLs; i++ {
 		fmt.Printf("Source URL   : %s\n", dlURLs[i].Src)
