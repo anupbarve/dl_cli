@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/url"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -70,11 +71,11 @@ func parseURLs(path string) ([]string, error) {
 	return urlsSlice, nil
 }
 
-// Core logic for download 
-func Download(path string, urls string) error {
+// Core logic for download
+func Download(dstPath string, urls string) error {
 
 	// Creates base directory for destination path
-	dstDir, err := createDstDir(path)
+	dstDir, err := createDstDir(dstPath)
 	if err != nil {
 		fmt.Printf("Target path validation failed. %v", err)
 		return err
@@ -125,11 +126,21 @@ func Download(path string, urls string) error {
 			var protocol protocol.Protocol
 			// For adding support to future protocols, add the case here.
 			switch dlURLs[i].Proto {
-			case "http":
-				protocol = dl_http.NewDlHttp(dlURLs[i])
-				// Core logic for the download
-				dlURLs[i].Err = protocol.Download()
-			case "https":
+			case "http", "https":
+				// Absolute file path is the one used to create a file on local disk
+				dlURLs[i].AbsFile = filepath.Join(dlURLs[i].Dst, dlURLs[i].SrcAbs)
+
+				// Calculate absolute directory path, this covers any subdirectory structure
+				// in the source URL
+				dlURLs[i].AbsDir = path.Dir(dlURLs[i].AbsFile)
+
+				// Create absolute directory path specific directory on local disk
+				err := os.MkdirAll(dlURLs[i].AbsDir, 0700)
+				if err != nil {
+					dlURLs[i].Err = err
+					return
+				}
+
 				protocol = dl_http.NewDlHttp(dlURLs[i])
 				// Core logic for the download
 				dlURLs[i].Err = protocol.Download()

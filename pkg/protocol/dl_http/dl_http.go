@@ -5,8 +5,6 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"path"
-	"path/filepath"
 
 	"github.com/dl_cli/pkg/utils"
 )
@@ -23,21 +21,9 @@ func NewDlHttp(dlURL utils.DownloadURL) *DlHttp {
 
 // Http protocol specific download function
 func (d *DlHttp) Download() error {
-	// Absolute file path is the one used to create a file on local disk
-	absFilePath := filepath.Join(d.dlURL.Dst, d.dlURL.SrcAbs)
-
-	// Calculate absolute directory path, this covers any subdirectory structure
-	// in the source URL
-	absDirPath := path.Dir(absFilePath)
-
-	// Create absolute directory path specific directory on local disk
-	err := os.MkdirAll(absDirPath, 0700)
-	if err != nil {
-		return err
-	}
 
 	// Create the target file based on absolute file path
-	dst, err := os.Create(absFilePath)
+	dst, err := os.Create(d.dlURL.AbsFile)
 	if err != nil {
 		return err
 	}
@@ -52,8 +38,8 @@ func (d *DlHttp) Download() error {
 	// Rollback in case of failure
 	if resp.StatusCode != http.StatusOK {
 		// okay to ignore the removal errors for now
-		os.Remove(absFilePath)
-		os.Remove(absDirPath)
+		os.Remove(d.dlURL.AbsFile)
+		os.Remove(d.dlURL.AbsDir)
 		return fmt.Errorf("Download failed for URL: %s", d.dlURL.Src)
 	}
 
@@ -62,8 +48,8 @@ func (d *DlHttp) Download() error {
 	_, err = io.Copy(dst, resp.Body)
 	if err != nil {
 		// okay to ignore the removal errors for now
-		os.Remove(absFilePath)
-		os.Remove(absDirPath)
+		os.Remove(d.dlURL.AbsFile)
+		os.Remove(d.dlURL.AbsDir)
 		return fmt.Errorf("Download failed, possible out of space: %s", d.dlURL.Src)
 	}
 
