@@ -51,14 +51,9 @@ func (d *DlHttp) Download() error {
 
 	// Rollback in case of failure
 	if resp.StatusCode != http.StatusOK {
-		err = os.Remove(absFilePath)
-		if err != nil {
-			return fmt.Errorf("Download failed for URL: %s, Cleanup of %s failed.", d.dlURL.Src, absFilePath)
-		}
-		err = os.Remove(absDirPath)
-		if err != nil {
-			return fmt.Errorf("Download failed for URL: %s, Cleanup of %s failed.", d.dlURL.Src, d.dlURL.Dst)
-		}
+		// okay to ignore the removal errors for now
+		os.Remove(absFilePath)
+		os.Remove(absDirPath)
 		return fmt.Errorf("Download failed for URL: %s", d.dlURL.Src)
 	}
 
@@ -66,14 +61,9 @@ func (d *DlHttp) Download() error {
 	// body to the target file will be in chunks of 32k
 	_, err = io.Copy(dst, resp.Body)
 	if err != nil {
-		err = os.Remove(absFilePath)
-		if err != nil {
-			return fmt.Errorf("Download failed for URL: %s, Cleanup of %s failed.", d.dlURL.Src, absFilePath)
-		}
-		err = os.Remove(absDirPath)
-		if err != nil {
-			return fmt.Errorf("Download failed for URL: %s, Cleanup of %s failed.", d.dlURL.Src, d.dlURL.Dst)
-		}
+		// okay to ignore the removal errors for now
+		os.Remove(absFilePath)
+		os.Remove(absDirPath)
 		return fmt.Errorf("Download failed, possible out of space: %s", d.dlURL.Src)
 	}
 
