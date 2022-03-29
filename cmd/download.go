@@ -13,7 +13,7 @@ var downloadExample = `
   dl_cli download -p <path to download> -u <comma separated list of urls>
 
   # Sample command to download files,
-  dl_cli download -p /tmp/test -u http://my.file.com/file,ftp://other.file.com/other,sftp://and.also.this/ending 
+  dl_cli download -p /tmp/test -u http://my.file.com/file,https://you.file.com/test 
  `
 
 // dlCmdDownload -- To download files from list of urls.
@@ -27,13 +27,16 @@ var (
 	}
 )
 
+// In-mem structure to represent the download context
 type DownloadContext struct {
-	dlPath string
-	urls   string
+	dlPath string // Target path
+	urls   string // String representing list of comma separated URLs
 }
 
+// Instance of DownloadContext
 var dlCtx DownloadContext
 
+// Add download command to the root command
 func init() {
 	rootCmd.AddCommand(dlCmdDownload)
 	dlCmdDownload.Flags().StringVarP(&dlCtx.dlPath, "path", "p", "", "Path to download the files")
@@ -42,10 +45,11 @@ func init() {
 
 // To download files from list of urls
 func dlCmdDownloadRun(cmd *cobra.Command, args []string) {
+	// Call the core package function
 	err := core.Download(dlCtx.dlPath, dlCtx.urls)
 	if err != nil {
 		fmt.Printf("Download operation failed. %v\n", err)
 	} else {
-		fmt.Printf("Download operation complete, all URLs processed. \n")
+		fmt.Printf("Download operation complete, all URLs processed.\n")
 	}
 }

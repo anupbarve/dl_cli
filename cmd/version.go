@@ -28,5 +28,6 @@ var (
 )
 
 func init() {
+	// Add version command to the root command
 	rootCmd.AddCommand(versionCmd)
 }

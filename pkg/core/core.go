@@ -1,17 +1,17 @@
 package core
 
 import (
-	"os"
 	"fmt"
+	"net/url"
+	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 	"time"
-	"path/filepath"
-	"net/url"
 
 	"github.com/dl_cli/pkg/protocol"
-	"github.com/dl_cli/pkg/utils"
 	"github.com/dl_cli/pkg/protocol/dl_http"
+	"github.com/dl_cli/pkg/utils"
 )
 
 type DownloadContextCore struct {
@@ -29,15 +29,15 @@ func createDstDir(path string) (string, error) {
 			return "", fmt.Errorf("Target path is not a directory: %s", path)
 		}
 		// Check writable permissions
-		if info.Mode().Perm() & (1 << (uint(7))) == 0 {
+		if info.Mode().Perm()&(1<<(uint(7))) == 0 {
 			return "", fmt.Errorf("Write permissions not set on target path: %s", path)
 		}
 	} else { // Target path does not exist. Creating the target directory
 
 		err = os.MkdirAll(path, 0700)
-			if err != nil {
-				return "", err
-			}
+		if err != nil {
+			return "", err
+		}
 	}
 
 	// Create a sub-dir based on current timestamp to avoid collisions
@@ -46,10 +46,10 @@ func createDstDir(path string) (string, error) {
 
 	dstDir := filepath.Join(path, subDir)
 
-        err = os.MkdirAll(dstDir, 0700)
-        if err != nil {
-                return "", err
-        }
+	err = os.MkdirAll(dstDir, 0700)
+	if err != nil {
+		return "", err
+	}
 
 	return dstDir, nil
 }
@@ -77,13 +77,12 @@ func Download(path string, urls string) error {
 
 	urlsSlice, err := parseURLs(urls)
 	if err != nil {
-                fmt.Printf("Parsing of input urls failed. %v", err)
+		fmt.Printf("Parsing of input urls failed. %v", err)
 		return err
-        }
+	}
 
 	numURLs := len(urlsSlice)
 	dlURLs := make([]utils.DownloadURL, numURLs)
-
 
 	for i, urlStr := range urlsSlice {
 		var dlURL utils.DownloadURL
@@ -101,7 +100,6 @@ func Download(path string, urls string) error {
 		dlURL.Src = urlStr
 		dlURL.SrcAbs = u.Path
 		dlURL.Dst = filepath.Join(dstDir, u.Host)
-		dlURL.IsDir = false
 		dlURL.Proto = u.Scheme
 		dlURLs[i] = dlURL
 	}
